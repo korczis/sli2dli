@@ -2,6 +2,7 @@ extern crate csv;
 
 use std::collections::HashSet;
 
+use super::manifest::Manifest;
 use super::options::Options;
 
 pub struct Processor {
@@ -15,7 +16,7 @@ impl Processor {
         }
     }
 
-    pub fn process(&mut self, path: &String, opts: &Options) {
+    pub fn process(&mut self, path: &String, _manifest: &Manifest, opts: &Options) {
         self.sets = Vec::new();
 
         if let Ok(rdr) = csv::Reader::from_file(&path) {

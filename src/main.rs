@@ -46,7 +46,7 @@ fn main() {
         .arg(Arg::with_name("FILE")
             .help("Files to process")
             .index(1)
-            .required(true)
+            .required(false)
             .multiple(true))
         .get_matches();
 
@@ -75,16 +75,23 @@ fn main() {
         _ => vec![String::from(".")],
     };
 
-    if let Some(path) = opts.manifest.as_ref() {
-        let br = BufReader::new(File::open(path).unwrap());
-        let manifest: Manifest = serde_json::from_reader(br).unwrap();
-        debug!("{:?}", manifest);
-    }
+    let manifest = match opts.manifest.as_ref() {
+        Some(path) => {
+            let br = BufReader::new(File::open(path).unwrap());
+            let manifest: Manifest = serde_json::from_reader(br).unwrap();
+            manifest
+        },
+        _ => Manifest {
+            manifest: None,
+        }
+    };
+
+    debug!("{:?}", manifest);
 
     for file in files {
         debug!("Processing file {:?}", &file);
         let mut processor = Processor::new();
-        processor.process(&file, &opts);
+        processor.process(&file, &manifest, &opts);
     }
 
     debug!("Finished!");
