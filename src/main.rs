@@ -9,7 +9,6 @@ extern crate sli2dli;
 
 use clap::{App, Arg};
 use sli2dli::*;
-use std::collections::HashSet;
 use std::env;
 use std::fs::*;
 use std::io::*;
@@ -42,11 +41,12 @@ fn main() {
             .help("Path to manifest file")
             .takes_value(true)
             .short("m")
-            .long("manifest"))
+            .long("manifest")
+            .required(true))
         .arg(Arg::with_name("FILE")
             .help("Files to process")
             .index(1)
-            .required(false)
+            .required(true)
             .multiple(true))
         .get_matches();
 
@@ -75,50 +75,17 @@ fn main() {
         _ => vec![String::from(".")],
     };
 
-    if let Some(path) = opts.manifest {
+    if let Some(path) = opts.manifest.as_ref() {
         let br = BufReader::new(File::open(path).unwrap());
-        let manifest : Manifest = serde_json::from_reader(br).unwrap();
+        let manifest: Manifest = serde_json::from_reader(br).unwrap();
         debug!("{:?}", manifest);
     }
 
     for file in files {
         debug!("Processing file {:?}", &file);
-        if let Ok(rdr) = csv::Reader::from_file(file) {
-            let mut rdr = rdr.delimiter(opts.delimiter)
-                .has_headers(opts.has_header)
-                .flexible(true);
-
-            let headers = if opts.has_header {
-                rdr.headers().unwrap()
-            } else {
-                let nums = 0..rdr.headers().unwrap_or(vec!()).len();
-                nums.map(|i| i.to_string()).collect()
-            };
-
-            debug!("Header is {:?}", headers);
-
-            let mut sets: Vec<HashSet<String>> = Vec::new();
-            for _ in &headers {
-                sets.push(HashSet::new());
-            }
-
-            for row in rdr.records() {
-                let row = row.unwrap();
-                let mut i = 0;
-                for val in row {
-                    sets[i].insert(val);
-                    i += 1;
-                }
-            }
-
-            let mut i = 0;
-            for set in &sets {
-                println!("{} - {}", headers[i], set.len());
-                i += 1;
-            }
-        }
+        let mut processor = Processor::new();
+        processor.process(&file, &opts);
     }
-
 
     debug!("Finished!");
 }

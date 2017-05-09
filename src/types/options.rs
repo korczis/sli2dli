@@ -13,7 +13,7 @@ impl<'a> From<&'a ArgMatches<'a>> for Options {
         Options {
             delimiter: match matches.value_of("delimiter") {
                 Some(val) => val.to_string().bytes().nth(0).unwrap_or(b','),
-                _ => b',' as u8
+                _ => b','
             },
             has_header: matches.is_present("has-header"),
             manifest: match matches.value_of("manifest") {
