@@ -38,10 +38,10 @@ ARGS:
 
 ### Libraries
 
-- [crossbeam - Support for parallelism and low-level concurrency in Rust](https://github.com/crossbeam-rs/crossbeam)
-- [csv - A CSV parser with type based decoding for Rust.](https://github.com/BurntSushi/rust-csv)
-- [mio - Metal IO library for Rust](https://github.com/carllerche/mio)
-- [mioco - Scalable, coroutine-based, fibers/green-threads for Rust programming language](https://github.com/dpc/mioco)
+- [crossbeam](https://github.com/crossbeam-rs/crossbeam) - Support for parallelism and low-level concurrency in Rust.
+- [csv](https://github.com/BurntSushi/rust-csv) - A CSV parser with type based decoding for Rust.
+- [mio](https://github.com/carllerche/mio) - Metal IO library for Rust.
+- [mioco](https://github.com/dpc/mioco) - Scalable, coroutine-based, fibers/green-threads for Rust programming language.
 
 ### Other
 
