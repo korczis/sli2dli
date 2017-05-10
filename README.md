@@ -4,6 +4,7 @@ SLI to DLI implementation written in rust. Nothing more, nothing less.
 
 ## Prerequisites
 
+- [Decent Compiler](http://llvm.org/)
 - [Rust - programming language](https://www.rust-lang.org/)
 - [Cargo - packages for Rust](https://crates.io/)
 
