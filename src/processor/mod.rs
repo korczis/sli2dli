@@ -25,7 +25,7 @@ impl Processor {
         self.sets = Vec::new();
 
         if let Ok(rdr) = csv::Reader::from_file(&path) {
-            let (tx, rx) = mpsc::channel();
+            let (tx, rx) = mpsc::sync_channel(100);
 
             thread::spawn(move || {
                 loop {
