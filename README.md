@@ -18,4 +18,5 @@ SLI to DLI implementation written in rust. Nothing more, nothing less.
 
 ### Other
 
+- [Fowler–Noll–Vo hash function](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
 - [Benchmarks of different Rust hashing algorithm implementations](http://cglab.ca/~abeinges/blah/hash-rs/)
