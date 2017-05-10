@@ -7,6 +7,7 @@ pub struct Options {
     pub delimiter: u8,
     pub has_header: bool,
     pub manifest: Option<String>,
+    pub cache: bool
 }
 
 impl<'a> From<&'a ArgMatches<'a>> for Options {
@@ -21,7 +22,8 @@ impl<'a> From<&'a ArgMatches<'a>> for Options {
             manifest: match matches.value_of("manifest") {
                 Some(val) => Some(val.to_string()),
                 _ => None
-            }
+            },
+            cache: matches.is_present("cache")
         }
     }
 }
