@@ -14,6 +14,7 @@ use std::fs;
 use std::os::unix::fs::MetadataExt;
 use time::PreciseTime;
 
+use self::helper::*;
 use self::manifest::*;
 use self::processor::*;
 use self::types::*;
@@ -24,6 +25,8 @@ const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 fn main() {
+    let _ = ProfileObject::new();
+
     let matches = App::new(DESCRIPTION)
         .version(VERSION)
         .author(AUTHOR)
@@ -109,7 +112,7 @@ fn main() {
 
         let human_size = human_format(size as f32);
         let human_speed = human_format(size as f32 / elapsed_secs as f32);
-        debug!("Stats - size: {:.2}{}B, time: {:.2}s, speed: {:.2}{}Bps", human_size.0, human_size.1, elapsed_secs, human_speed.0, human_speed.1 );
+        println!("Stats - size: {:.2}{}B, time: {:.2}s, speed: {:.2}{}Bps", human_size.0, human_size.1, elapsed_secs, human_speed.0, human_speed.1 );
     }
 
     debug!("Finished!");
