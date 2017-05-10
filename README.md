@@ -36,6 +36,11 @@ ARGS:
 
 ## References
 
+### Articles
+
+- [Bloom Filter](https://en.wikipedia.org/wiki/Bloom_filter) - Space-efficient probabilistic data structure.
+- [Cuckoo](https://en.wikipedia.org/wiki/Cuckoo_hashing) - Scheme for resolving hash collisions.
+
 ### Libraries
 
 - [crossbeam](https://github.com/crossbeam-rs/crossbeam) - Support for parallelism and low-level concurrency in Rust.
