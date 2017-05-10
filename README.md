@@ -8,6 +8,32 @@ SLI to DLI implementation written in rust. Nothing more, nothing less.
 - [Rust - programming language](https://www.rust-lang.org/)
 - [Cargo - packages for Rust](https://crates.io/)
 
+## Usage
+
+```
+$ sli2dli -h
+ 0.1.0
+Tomas Korcak <korczis@gmail.com>
+Disk Usage Information
+
+USAGE:
+    sli2dli [FLAGS] [OPTIONS] <FILE>... --manifest <manifest>
+
+FLAGS:
+    -c, --cache         Cache results
+        --has-header    CSV has header row
+    -h, --help          Prints help information
+    -V, --version       Prints version information
+    -v, --verbose       Verbose mode
+
+OPTIONS:
+    -d, --delimiter <delimiter>    Delimiter [default: ,]
+    -m, --manifest <manifest>      Path to manifest file
+
+ARGS:
+    <FILE>...    Files to process
+```
+
 ## References
 
 ### Libraries
