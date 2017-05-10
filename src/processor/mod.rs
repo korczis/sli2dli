@@ -3,7 +3,7 @@ extern crate csv;
 use std::collections::HashSet;
 
 use super::manifest::Manifest;
-use super::options::Options;
+use super::types::options::Options;
 
 pub struct Processor {
     pub sets: Vec<HashSet<String>>,

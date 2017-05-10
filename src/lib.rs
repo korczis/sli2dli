@@ -9,6 +9,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+pub mod manifest;
+pub mod processor;
 pub mod types;
 
 #[cfg(test)]

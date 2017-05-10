@@ -4,15 +4,14 @@ extern crate env_logger;
 
 extern crate clap;
 extern crate csv;
-extern crate serde_json;
 extern crate sli2dli;
 
 use clap::{App, Arg};
 use sli2dli::*;
 use std::env;
-use std::fs::*;
-use std::io::*;
 
+use self::manifest::*;
+use self::processor::*;
 use self::types::*;
 
 const AUTHOR: &'static str = env!("CARGO_PKG_AUTHORS");
@@ -46,7 +45,7 @@ fn main() {
         .arg(Arg::with_name("FILE")
             .help("Files to process")
             .index(1)
-            .required(false)
+            .required(true)
             .multiple(true))
         .get_matches();
 
@@ -77,9 +76,7 @@ fn main() {
 
     let manifest = match opts.manifest.as_ref() {
         Some(path) => {
-            let br = BufReader::new(File::open(path).unwrap());
-            let manifest: Manifest = serde_json::from_reader(br).unwrap();
-            manifest
+            Manifest::from_file(path)
         },
         _ => Manifest {
             manifest: None,
