@@ -1,3 +1,5 @@
+
+
 use time::PreciseTime;
 
 pub struct ProfileObject {
@@ -5,7 +7,7 @@ pub struct ProfileObject {
 }
 
 impl ProfileObject {
-    pub fn new() -> ProfileObject{
+    pub fn new() -> ProfileObject {
         ProfileObject {
             start: PreciseTime::now()
         }
@@ -18,5 +20,12 @@ impl Drop for ProfileObject {
         let elapsed_secs = diff.num_nanoseconds().unwrap() as f64 * 1e-9;
 
         debug!("Drop() - {:?}", elapsed_secs);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
     }
 }

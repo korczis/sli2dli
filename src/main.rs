@@ -14,9 +14,9 @@ use std::fs;
 use std::os::unix::fs::MetadataExt;
 use time::PreciseTime;
 
-use self::helper::*;
-use self::manifest::*;
-use self::processor::*;
+use self::manifest::manifest::*;
+use self::processor::processor::*;
+use self::profiler::*;
 use self::types::*;
 use self::types::formatter::human_format;
 
@@ -25,7 +25,7 @@ const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 fn main() {
-    let _ = ProfileObject::new();
+    let _p = ProfileObject::new();
 
     let matches = App::new(DESCRIPTION)
         .version(VERSION)
