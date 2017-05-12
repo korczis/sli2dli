@@ -12,5 +12,4 @@ pub struct DataSetSLIManifest {
     pub csv_params: Option<CsvParams>,
 
     pub parts: Option<Vec<Part>>
-
 }

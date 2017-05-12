@@ -2,6 +2,7 @@
 name = "sli2dli"
 version = "0.1.0"
 authors = ["Tomas Korcak <korczis@gmail.com>"]
+build = "src/build.rs"
 
 [dependencies]
 clap = ">= 2.18"
