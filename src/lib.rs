@@ -10,7 +10,9 @@ extern crate time;
 #[macro_use]
 extern crate serde_derive;
 
+pub mod logger;
 pub mod manifest;
+pub mod options;
 pub mod profiler;
 pub mod processor;
 pub mod types;

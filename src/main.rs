@@ -14,8 +14,9 @@ use std::fs;
 use std::os::unix::fs::MetadataExt;
 use time::PreciseTime;
 
-use self::manifest::manifest::*;
-use self::processor::processor::*;
+use self::manifest::manifest::Manifest;
+use self::options::options::Options;
+use self::processor::processor::Processor   ;
 use self::profiler::*;
 use self::types::*;
 use self::types::formatter::human_format;
@@ -54,6 +55,16 @@ fn main() {
             .short("m")
             .long("manifest")
             .required(true))
+        .arg(Arg::with_name("bulk-size")
+            .help("Size of IO bulk (number of rows)")
+            .takes_value(true)
+            .short("b")
+            .long("bulk-size")
+            .default_value("50"))
+        .arg(Arg::with_name("sync-io")
+            .help("Synchronous IO thread messaging")
+            .short("s")
+            .long("sync-io"))
         .arg(Arg::with_name("FILE")
             .help("Files to process")
             .index(1)
@@ -74,7 +85,10 @@ fn main() {
 
     debug!("Raw options are {:?}", &matches);
     debug!("Parsed options are {:?}", &opts);
-    debug!("Escape character is {:?}", String::from_utf8(vec!(opts.delimiter)).unwrap());
+
+    if let Ok(delimiter) =  String::from_utf8(vec!(opts.csv.delimiter)) {
+        debug!("Delimiter character is {:?}", delimiter);
+    }
 
     let files: Vec<_> = match matches.values_of("FILE") {
         Some(dirs) => {
