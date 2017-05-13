@@ -32,13 +32,6 @@ impl Processor {
         self.sets = Vec::new();
 
         if let Ok(rdr) = csv::Reader::from_file(&path) {
-//            let (tx, rx) = if opts.sync_io {
-//                mpsc::sync_channel(100)
-//            } else {
-//                mpsc::channel()
-//            };
-
-            // let (tx, rx) = mpsc::channel();
             let (tx, rx) = mpsc::sync_channel(100);
 
             let rows_count = Arc::new(Mutex::new(0));
@@ -47,16 +40,14 @@ impl Processor {
                 loop {
                     match rx.recv() {
                         Ok(data) => {
-                            let (mt, _data) = data;
+                            let (mt, data) = data;
                             match mt {
                                 MessageType::Bulk => {
-//                                    if let Some(data) = _data {
-//                                        let mut data_rows_count = rows_count_clone.lock().unwrap();
-//                                        *data_rows_count += data.len();
-//                                    };
-
-                                    let mut data_rows_count = rows_count_clone.lock().unwrap();
-                                    *data_rows_count += 1;
+                                    if let Some(data) = data {
+                                        let mut data_rows_count = rows_count_clone.lock().unwrap();
+                                        let data: Vec<_> = data;
+                                        *data_rows_count += data.len();
+                                    };
                                 },
                                 MessageType::EndOfStream => break,
                                 MessageType::Row => {
@@ -72,7 +63,7 @@ impl Processor {
 
             let mut rdr = rdr.delimiter(opts.csv.delimiter)
                 .has_headers(opts.csv.has_header)
-                .flexible(true);
+                .flexible(opts.csv.flexible);
 
             let headers = if opts.csv.has_header {
                 rdr.headers().unwrap()

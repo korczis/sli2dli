@@ -24,6 +24,7 @@ impl<'a> From<&'a ArgMatches<'a>> for Options {
                     _ => DEFAULT_DELIMITER
                 },
                 has_header: matches.is_present("has-header"),
+                flexible: matches.is_present("flexible"),
             },
             manifest: match matches.value_of("manifest") {
                 Some(val) => Some(val.to_string()),
