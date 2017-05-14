@@ -20,13 +20,11 @@ type TransposeMessage = (MessageType, Option<CsvRows>);
 type TransposeMessageSender = mpsc::SyncSender<TransposeMessage>;
 type TransposeMessageReceiver = mpsc::Receiver<TransposeMessage>;
 
-pub struct Processor {
-}
+pub struct Processor {}
 
 impl Processor {
     pub fn new() -> Processor {
-        Processor {
-        }
+        Processor {}
     }
 
     fn create_transpose_thread(headers: &CsvRow, rx: TransposeMessageReceiver) -> JoinHandle<()> {
@@ -64,12 +62,12 @@ impl Processor {
 
                                     rows_count += data.len();
                                 };
-                            },
+                            }
                             // TODO: Wrap this in method ..
                             MessageType::EndOfStream => {
                                 debug!("Number of rows - {:?}", rows_count);
                                 break
-                            },
+                            }
                         }
                     }
                     _ => break
@@ -127,25 +125,25 @@ impl Processor {
 
             let _ = thread_handle.join();
 
-//            let p = match opts.cache {
-//                true => {
-//                    let p = format!("{}.s2d", &path);
-//                    debug!("Creating directory {:?}", &p);
-//                    let _ = fs::create_dir_all(&p);
-//                    Some(p)
-//                },
-//                false => {
-//                    None
-//                }
-//            };
+            //            let p = match opts.cache {
+            //                true => {
+            //                    let p = format!("{}.s2d", &path);
+            //                    debug!("Creating directory {:?}", &p);
+            //                    let _ = fs::create_dir_all(&p);
+            //                    Some(p)
+            //                },
+            //                false => {
+            //                    None
+            //                }
+            //            };
 
-//            let mut i = 0;
-//            for set in &self.sets {
-//                println!("{} - {}", headers[i], set.len());
-//
-//                if let &Some(ref p) = &p {
-//                    let filename = format!("{}.json", &headers[i]);
-//
+            //            let mut i = 0;
+            //            for set in &self.sets {
+            //                println!("{} - {}", headers[i], set.len());
+            //
+            //                if let &Some(ref p) = &p {
+            //                    let filename = format!("{}.json", &headers[i]);
+            //
         }
     }
 }
