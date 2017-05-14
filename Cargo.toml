@@ -48,5 +48,8 @@ debug = false
 rpath = false
 lto = true
 debug-assertions = false
-codegen-units = 1
 panic = 'unwind'
+
+[build.rustflags]
+target-feature = "+ssse3"
+target-cpu = "native"

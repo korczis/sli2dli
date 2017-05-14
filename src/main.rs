@@ -40,6 +40,11 @@ fn main() {
                  .help("Cache results")
                  .short("c")
                  .long("cache"))
+        .arg(Arg::with_name("channel-size")
+            .help("Size of sync_channel used by transpose thread")
+            .takes_value(true)
+            .long("channel-size")
+            .default_value("100"))
         .arg(Arg::with_name("delimiter")
                  .help("Delimiter")
                  .short("d")
@@ -62,7 +67,7 @@ fn main() {
                  .takes_value(true)
                  .short("b")
                  .long("bulk-size")
-                 .default_value("50"))
+                 .default_value("100"))
         .arg(Arg::with_name("sync-io")
                  .help("Synchronous IO thread messaging")
                  .short("s")
@@ -111,8 +116,8 @@ fn main() {
         let start = PreciseTime::now();
 
         debug!("Processing file {:?}", &file);
-        let mut processor = Processor::new();
-        processor.process(&file, &manifest, &opts);
+        let mut processor = Processor::default();
+        processor.process(file, &manifest, &opts);
 
         let diff = start.to(PreciseTime::now());
         let elapsed_secs = diff.num_nanoseconds().unwrap() as f64 * 1e-9;

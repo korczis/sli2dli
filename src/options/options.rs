@@ -1,12 +1,15 @@
 use clap::ArgMatches;
 
-pub const DEFAULT_BULK_SIZE: usize = 50;
+pub const DEFAULT_BULK_SIZE: usize = 100;
+pub const DEFAULT_CHANNEL_SIZE: usize = 100;
 pub const DEFAULT_DELIMITER: u8 = b',';
 
+use super::channel::Channel;
 use super::csv::OptionsCsv;
 
 #[derive(Debug, Clone)]
 pub struct Options {
+    pub channel: Channel,
     pub csv: OptionsCsv,
     pub manifest: Option<String>,
     pub cache: bool,
@@ -18,6 +21,13 @@ impl<'a> From<&'a ArgMatches<'a>> for Options {
     fn from(matches: &ArgMatches) -> Options {
         debug!("Parsing options");
         Options {
+            channel: Channel {
+                size: matches.value_of("channel-size")
+                    .unwrap()
+                    .to_string()
+                    .parse::<usize>()
+                    .unwrap_or(DEFAULT_CHANNEL_SIZE),
+            },
             csv: OptionsCsv {
                 delimiter: match matches.value_of("delimiter") {
                     Some(val) => val.to_string().bytes().nth(0).unwrap_or(DEFAULT_DELIMITER),

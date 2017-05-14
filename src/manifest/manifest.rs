@@ -12,7 +12,7 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn from_file(path: &String) -> Manifest {
+    pub fn from_file(path: &str) -> Manifest {
         let br = BufReader::new(File::open(path).unwrap());
         let manifest: Manifest = serde_json::from_reader(br).unwrap();
         manifest

@@ -1,7 +1,6 @@
 extern crate csv;
 
 use std::fs;
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
 use std::thread::{self, JoinHandle};
 
@@ -20,58 +19,43 @@ type TransposeMessage = (MessageType, Option<CsvRows>);
 type TransposeMessageSender = mpsc::SyncSender<TransposeMessage>;
 type TransposeMessageReceiver = mpsc::Receiver<TransposeMessage>;
 
+#[derive(Default)]
 pub struct Processor {}
 
 impl Processor {
-    pub fn new() -> Processor {
-        Processor {}
-    }
-
     fn create_transpose_thread(headers: &CsvRow, rx: TransposeMessageReceiver) -> JoinHandle<()> {
-        thread::spawn(move || {
-            let mut stats: Vec<Vec<String>> = Vec::new();
-            let _ = stats.reserve(headers.len());
-            for _ in headers {
-                stats.push(Vec::new());
-            }
+        let stats: Vec<_> = headers.iter().map(|_| Vec::new()).collect();
 
+        thread::spawn(move || {
             let mut rows_count = 0;
 
-            loop {
-                // TODO: Extract loop handler in method
-                match rx.recv() {
-                    Ok(data) => {
-                        // TODO: Wrap message handler in method
-                        let (mt, maybe_data) = data;
-                        match mt {
-                            // TODO: Wrap this in method ..
-                            MessageType::Bulk => {
-                                if let Some(raw_data) = maybe_data {
-                                    let data: Vec<_> = raw_data;
+            while let Ok(data) = rx.recv() {
+                // TODO: Wrap message handler in method
+                let (mt, maybe_data) = data;
+                match mt {
+                    // TODO: Wrap this in method ..
+                    MessageType::Bulk => {
+                        if let Some(raw_data) = maybe_data {
+                            let data: Vec<_> = raw_data;
 
-                                    let mut stats = stats.clone();
+                            let mut stats = stats.clone();
 
-                                    for row in &data {
-                                        let mut i: usize = 0;
-                                        for item in row {
-                                            let str: &String = item;
-                                            stats[i].push(str.clone());
-                                            i += 1;
-                                        }
-                                    }
-
-                                    rows_count += data.len();
-                                };
+                            for row in &data {
+                                for (i, item) in row.iter().enumerate() {
+                                    let str: &String = item;
+                                    stats[i].push(str.clone());
+                                }
                             }
-                            // TODO: Wrap this in method ..
-                            MessageType::EndOfStream => {
-                                debug!("Number of rows - {:?}", rows_count);
-                                break
-                            }
-                        }
+
+                            rows_count += data.len();
+                        };
                     }
-                    _ => break
-                };
+                    // TODO: Wrap this in method ..
+                    MessageType::EndOfStream => {
+                        debug!("Number of rows - {:?}", rows_count);
+                        break
+                    }
+                }
             }
         })
     }
@@ -86,25 +70,24 @@ impl Processor {
     }
 
     fn process_rows(rdr: &mut csv::Reader<fs::File>, tx: TransposeMessageSender, opts: &Options) {
-        // TODO: Wrap CSV Parsing in method - begin
         let mut rows = Vec::new();
         for row in rdr.records() {
             rows.push(row.unwrap());
 
             if rows.len() == opts.bulk_size {
-                let _ = tx.send((MessageType::Bulk, Some(rows))).unwrap();
+                tx.send((MessageType::Bulk, Some(rows))).unwrap();
                 rows = Vec::new();
             }
         }
 
-        if rows.len() > 0 {
-            let _ = tx.send((MessageType::Bulk, Some(rows))).unwrap();
+        if !rows.is_empty() {
+            tx.send((MessageType::Bulk, Some(rows))).unwrap();
         }
 
-        let _ = tx.send((MessageType::EndOfStream, None)).unwrap();
+        tx.send((MessageType::EndOfStream, None)).unwrap();
     }
 
-    pub fn process(&mut self, path: &String, _manifest: &Manifest, opts: &Options) {
+    pub fn process(&mut self, path: &str, _manifest: &Manifest, opts: &Options) {
         if let Ok(rdr) = csv::Reader::from_file(&path) {
             // TODO: Wrap reader construction (rdr <- reader)_
             let mut rdr = rdr.delimiter(opts.csv.delimiter)
@@ -115,10 +98,13 @@ impl Processor {
 
             debug!("Header is {:?}", headers);
 
-            // TODO: Get sync_channel size from CLI opts
-            let (tx, rx) = mpsc::sync_channel(100);
+            let channel_size = opts.channel.size;
 
-            // TODO: Method for creating worker handle
+            debug!("Transpose thread channel size is {}", &channel_size);
+            debug!("Transpose thread bulk size is {}", &opts.bulk_size);
+
+            let (tx, rx) = mpsc::sync_channel(channel_size);
+
             let thread_handle = Processor::create_transpose_thread(&headers, rx);
 
             Processor::process_rows(&mut rdr, tx, opts);

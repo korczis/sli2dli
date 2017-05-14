@@ -1,11 +1,9 @@
-pub mod logger;
 pub mod manifest;
 pub mod options;
 pub mod processor;
 pub mod profiler;
 pub mod types;
 
-pub use self::logger::*;
 pub use self::manifest::*;
 pub use self::options::*;
 pub use self::processor::*;

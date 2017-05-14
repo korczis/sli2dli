@@ -13,6 +13,6 @@ pub fn human_format(val: f32) -> (f32, &'static str) {
         }
     }
 
-    (val, &UNITS[i])
+    (val, UNITS[i])
 }
 

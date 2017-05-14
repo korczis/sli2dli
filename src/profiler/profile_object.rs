@@ -14,6 +14,12 @@ impl ProfileObject {
     }
 }
 
+impl Default for ProfileObject {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Drop for ProfileObject {
     fn drop(&mut self) {
         self.end_of_scope()
@@ -32,6 +38,5 @@ impl EndOfScope for ProfileObject {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn it_works() {
-    }
+    fn it_works() {}
 }
