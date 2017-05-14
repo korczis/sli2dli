@@ -1,128 +1,151 @@
 extern crate csv;
 
-use serde_json;
-use std::collections::HashSet;
-use std::fs::{self, File};
-use std::path::Path;
+use std::fs;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
-use std::thread;
+use std::thread::{self, JoinHandle};
 
 use super::super::manifest::Manifest;
 use super::super::options::Options;
 
 enum MessageType {
-    Row,
     Bulk,
     EndOfStream
 }
 
+type CsvRow = Vec<String>;
+type CsvRows = Vec<CsvRow>;
+
+type TransposeMessage = (MessageType, Option<CsvRows>);
+type TransposeMessageSender = mpsc::SyncSender<TransposeMessage>;
+type TransposeMessageReceiver = mpsc::Receiver<TransposeMessage>;
+
 pub struct Processor {
-    pub sets: Vec<HashSet<String>>,
 }
 
 impl Processor {
     pub fn new() -> Processor {
         Processor {
-            sets: Vec::new()
         }
     }
 
-    pub fn process(&mut self, path: &String, _manifest: &Manifest, opts: &Options) {
-        self.sets = Vec::new();
+    fn create_transpose_thread(headers: &CsvRow, rx: TransposeMessageReceiver) -> JoinHandle<()> {
+        thread::spawn(move || {
+            let mut stats: Vec<Vec<String>> = Vec::new();
+            let _ = stats.reserve(headers.len());
+            for _ in headers {
+                stats.push(Vec::new());
+            }
 
-        if let Ok(rdr) = csv::Reader::from_file(&path) {
-            let (tx, rx) = mpsc::sync_channel(100);
+            let mut rows_count = 0;
 
-            let rows_count = Arc::new(Mutex::new(0));
-            let rows_count_clone = rows_count.clone();
-            let thread_handle = thread::spawn(move || {
-                loop {
-                    match rx.recv() {
-                        Ok(data) => {
-                            let (mt, data) = data;
-                            match mt {
-                                MessageType::Bulk => {
-                                    if let Some(data) = data {
-                                        let mut data_rows_count = rows_count_clone.lock().unwrap();
-                                        let data: Vec<_> = data;
-                                        *data_rows_count += data.len();
-                                    };
-                                },
-                                MessageType::EndOfStream => break,
-                                MessageType::Row => {
-                                    let mut data_rows_count = rows_count_clone.lock().unwrap();
-                                    *data_rows_count += 1;
-                                },
-                            }
+            loop {
+                // TODO: Extract loop handler in method
+                match rx.recv() {
+                    Ok(data) => {
+                        // TODO: Wrap message handler in method
+                        let (mt, maybe_data) = data;
+                        match mt {
+                            // TODO: Wrap this in method ..
+                            MessageType::Bulk => {
+                                if let Some(raw_data) = maybe_data {
+                                    let data: Vec<_> = raw_data;
+
+                                    let mut stats = stats.clone();
+
+                                    for row in &data {
+                                        let mut i: usize = 0;
+                                        for item in row {
+                                            let str: &String = item;
+                                            stats[i].push(str.clone());
+                                            i += 1;
+                                        }
+                                    }
+
+                                    rows_count += data.len();
+                                };
+                            },
+                            // TODO: Wrap this in method ..
+                            MessageType::EndOfStream => {
+                                debug!("Number of rows - {:?}", rows_count);
+                                break
+                            },
                         }
-                        _ => break
-                    };
-                }
-            });
+                    }
+                    _ => break
+                };
+            }
+        })
+    }
 
+    fn get_header(rdr: &mut csv::Reader<fs::File>, opts: &Options) -> CsvRow {
+        if opts.csv.has_header {
+            rdr.headers().unwrap()
+        } else {
+            let nums = 0..rdr.headers().unwrap_or(vec!()).len();
+            nums.map(|i| i.to_string()).collect()
+        }
+    }
+
+    fn process_rows(rdr: &mut csv::Reader<fs::File>, tx: TransposeMessageSender, opts: &Options) {
+        // TODO: Wrap CSV Parsing in method - begin
+        let mut rows = Vec::new();
+        for row in rdr.records() {
+            rows.push(row.unwrap());
+
+            if rows.len() == opts.bulk_size {
+                let _ = tx.send((MessageType::Bulk, Some(rows))).unwrap();
+                rows = Vec::new();
+            }
+        }
+
+        if rows.len() > 0 {
+            let _ = tx.send((MessageType::Bulk, Some(rows))).unwrap();
+        }
+
+        let _ = tx.send((MessageType::EndOfStream, None)).unwrap();
+    }
+
+    pub fn process(&mut self, path: &String, _manifest: &Manifest, opts: &Options) {
+        if let Ok(rdr) = csv::Reader::from_file(&path) {
+            // TODO: Wrap reader construction (rdr <- reader)_
             let mut rdr = rdr.delimiter(opts.csv.delimiter)
                 .has_headers(opts.csv.has_header)
                 .flexible(opts.csv.flexible);
 
-            let headers = if opts.csv.has_header {
-                rdr.headers().unwrap()
-            } else {
-                let nums = 0..rdr.headers().unwrap_or(vec!()).len();
-                nums.map(|i| i.to_string()).collect()
-            };
+            let headers = Processor::get_header(&mut rdr, opts);
 
             debug!("Header is {:?}", headers);
 
-            for _ in &headers {
-                self.sets.push(HashSet::new());
-            }
+            // TODO: Get sync_channel size from CLI opts
+            let (tx, rx) = mpsc::sync_channel(100);
 
+            // TODO: Method for creating worker handle
+            let thread_handle = Processor::create_transpose_thread(&headers, rx);
 
-            let mut rows = Vec::new();
-            for row in rdr.records() {
-                rows.push(row);
+            Processor::process_rows(&mut rdr, tx, opts);
 
-                if rows.len() == opts.bulk_size {
-                    let _ = tx.send((MessageType::Bulk, Some(rows))).unwrap();
-                    rows = Vec::new();
-                }
-            }
-
-            if rows.len() > 0 {
-                let _ = tx.send((MessageType::Bulk, Some(rows))).unwrap();
-                rows = Vec::new();
-            }
-
-            let _ = tx.send((MessageType::EndOfStream, None)).unwrap();
             let _ = thread_handle.join();
 
-            debug!("Number of rows - {:?}", *rows_count.lock().unwrap());
+//            let p = match opts.cache {
+//                true => {
+//                    let p = format!("{}.s2d", &path);
+//                    debug!("Creating directory {:?}", &p);
+//                    let _ = fs::create_dir_all(&p);
+//                    Some(p)
+//                },
+//                false => {
+//                    None
+//                }
+//            };
 
-            let p = match opts.cache {
-                true => {
-                    let p = format!("{}.s2d", &path);
-                    debug!("Creating directory {:?}", &p);
-                    let _ = fs::create_dir_all(&p);
-                    Some(p)
-                },
-                false => {
-                    None
-                }
-            };
-
-            let mut i = 0;
-            for set in &self.sets {
-                println!("{} - {}", headers[i], set.len());
-
-                if let &Some(ref p) = &p {
-                    let filename = format!("{}.json", &headers[i]);
-                    let file = File::create(Path::new(&p).join(filename)).unwrap();
-                    let _ = serde_json::to_writer_pretty(&file, &set).unwrap();
-                }
-
-                i += 1;
-            }
+//            let mut i = 0;
+//            for set in &self.sets {
+//                println!("{} - {}", headers[i], set.len());
+//
+//                if let &Some(ref p) = &p {
+//                    let filename = format!("{}.json", &headers[i]);
+//
         }
     }
 }
